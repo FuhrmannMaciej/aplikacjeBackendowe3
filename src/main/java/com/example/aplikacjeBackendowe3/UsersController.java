@@ -42,7 +42,11 @@ public class UsersController {
     )
     @ResponseBody
     public ResponseEntity<UsersEntity> getUser(@PathVariable("id") int id){
-        return ResponseEntity.ok(this.usersService.getUser(id));
+        if (this.usersService.getUser(id) == null) {
+            return ResponseEntity.notFound().build();
+        } else {
+            return ResponseEntity.ok(this.usersService.getUser(id));
+        }
     }
 
     @RequestMapping(

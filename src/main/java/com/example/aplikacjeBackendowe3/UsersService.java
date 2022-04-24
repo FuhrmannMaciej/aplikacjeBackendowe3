@@ -2,22 +2,18 @@ package com.example.aplikacjeBackendowe3;
 
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.*;
 
 @Service
 public class UsersService {
 
     List<UsersEntity> users = new ArrayList<>();
-
-    public UsersService() {
-        users.add(new UsersEntity(1, "adam"));
-        users.add(new UsersEntity(2, "john"));
-        users.add(new UsersEntity(3, "jake"));
-        users.add(new UsersEntity(4, "mia"));
-    }
 
     public UsersPage getUsers (int pageNumber, int pageSize){
 
@@ -39,17 +35,53 @@ public class UsersService {
     }
 
     public UsersEntity getUser(int id) {
+        if (id > users.size() || users.get(id - 1) == null) {
+            return null;
+        } else {
         return users.get(id - 1);
+        }
     }
 
     public Map<String, Boolean> deleteUser(int id) {
-        users.remove(id - 1);
+        if (id > users.size() || users.get(id - 1) == null) {
+            return null;
+        } else {
+        users.set(id - 1, null);
         return Collections.singletonMap("result", true);
+        }
     }
 
     public UsersEntity updateUser(int id, UsersEntity user) {
-        user.setId(id);
-        users.set(id - 1, user);
-        return user;
+        if (id > users.size() || users.get(id - 1) == null) {
+            return null;
+        } else {
+            user.setId(id);
+            users.set(id - 1, user);
+            return user;
+        }
+    }
+
+    @PostConstruct
+    private void onCreate() {
+        try(Scanner scanner = new Scanner(new FileReader("src/main/resources/users"))) {
+            while (scanner.hasNext()) {
+                users.add(new UsersEntity(scanner.nextInt(), scanner.next("[\\w]+")));
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @PreDestroy
+    private void onDestroy() {
+        try (FileWriter writer = new FileWriter("src/main/resources/users", false)) {
+            for (UsersEntity user : users) {
+                if (user != null) {
+                    writer.write(user.getId() + " " + user.getName() + "\n");
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
